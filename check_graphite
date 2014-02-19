@@ -55,6 +55,10 @@ optparse = OptionParser.new do |opts|
   opts.on("-z", "--zero-on-error", "Return 0 on a graphite 500 error") do |zero_on_error|
     @@options[:zero_on_error] = zero_on_error
   end
+  @@options[:critical_on_empty_datapoints] = false
+  opts.on("-x", "--critical-on-empty-datapoints", "Return CRITICAL if datapoints contain no data") do |critical_on_empty_datapoints|
+    @@options[:critical_on_empty_datapoints] = critical_on_empty_datapoints
+  end
   opts.on( "-h", "--help", "Display this screen" ) do
     puts opts
     exit
@@ -93,7 +97,12 @@ begin
         end
       end
       if (count == 0)
-        count = 1
+        if @@options[:critical_on_empty_datapoints]
+          puts "CRITICAL data points are empty"
+          exit EXIT_CRITICAL
+        else
+          count = 1
+        end
       end
       if (@@options[:function] == "average")
         data["#{cache['target']}"] /= count
